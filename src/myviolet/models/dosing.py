@@ -40,17 +40,27 @@ class DosingChannel:
 
 
 def collect_dosing_channels(raw: dict[str, Any]) -> dict[str, DosingChannel]:
-    """Return dosing channels keyed by code (`CL`, `ELO`, ...), present-only."""
+    """Return dosing channels keyed by code (`CL`, `ELO`, ...), present-only.
+
+    Channels whose `OutputState` is an unknown firmware value are skipped
+    rather than raising, to keep snapshot parsing forward-compatible.
+    Unknown `DosingType` values surface as `None` on `.type` for the same
+    reason.
+    """
     result: dict[str, DosingChannel] = {}
     for number, code in _CHANNELS.items():
         base = f"DOS_{number}_{code}"
         state_raw = raw.get(base)
         if state_raw is None:
             continue
+        try:
+            state = OutputState(int(state_raw))
+        except ValueError:
+            continue
         result[code] = DosingChannel(
             code=code,
             channel_number=number,
-            state=OutputState(int(state_raw)),
+            state=state,
             last_on=parse_epoch_seconds(raw.get(f"{base}_LAST_ON")),
             last_off=parse_epoch_seconds(raw.get(f"{base}_LAST_OFF")),
             runtime=parse_runtime_string(raw.get(f"{base}_RUNTIME", "00h 00m 00s")),
@@ -73,4 +83,10 @@ def _maybe_bool(value: Any) -> bool | None:
 
 
 def _maybe_dosing_type(value: Any) -> DosingType | None:
-    return None if value is None else DosingType(int(value))
+    if value is None:
+        return None
+    try:
+        return DosingType(int(value))
+    except ValueError:
+        # Forward-compat: unknown firmware DosingType surfaces as None.
+        return None

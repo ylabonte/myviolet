@@ -51,9 +51,14 @@ class Pump:
             state_raw = raw.get(f"PUMP_RPM_{rpm}")
             if state_raw is None:
                 continue
+            try:
+                state = OutputState(int(state_raw))
+            except ValueError:
+                # Forward-compat: skip unknown firmware enum values rather than crash.
+                continue
             speeds[rpm] = PumpSpeed(
                 rpm=rpm,
-                state=OutputState(int(state_raw)),
+                state=state,
                 runtime=parse_runtime_string(raw.get(f"PUMP_RPM_{rpm}_RUNTIME", "00h 00m 00s")),
             )
         return cls(

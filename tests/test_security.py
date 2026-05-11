@@ -49,6 +49,33 @@ class TestHostValidation:
         finally:
             await session.close()
 
+
+class TestCredentialPairing:
+    """Reject half-credentials so callers don't silently fall back to anonymous."""
+
+    async def test_username_without_password_rejected(self) -> None:
+        session = aiohttp.ClientSession()
+        try:
+            with pytest.raises(ValueError, match="together"):
+                VioletClient(session, host="violet.local", username="admin")
+        finally:
+            await session.close()
+
+    async def test_password_without_username_rejected(self) -> None:
+        session = aiohttp.ClientSession()
+        try:
+            with pytest.raises(ValueError, match="together"):
+                VioletClient(session, host="violet.local", password="secret")
+        finally:
+            await session.close()
+
+    async def test_both_omitted_accepted(self) -> None:
+        session = aiohttp.ClientSession()
+        try:
+            VioletClient(session, host="violet.local")
+        finally:
+            await session.close()
+
     @pytest.mark.parametrize(
         "host",
         [

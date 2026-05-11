@@ -116,8 +116,12 @@ async def _handle_set_function(request: web.Request) -> web.Response:
         return web.Response(status=400, text="expected KEY,ACTION,DURATION,VALUE")
     key = parts[0]
     action = parts[1]
-    duration = int(parts[2]) if len(parts) > 2 and parts[2] else 0
-    value = int(parts[3]) if len(parts) > 3 and parts[3] else 0
+    try:
+        duration = int(parts[2]) if len(parts) > 2 and parts[2] else 0
+        value = int(parts[3]) if len(parts) > 3 and parts[3] else 0
+    except ValueError:
+        _LOG.debug("setFunctionManually got non-integer duration/value", exc_info=True)
+        return web.Response(status=400, text="duration and value must be integers")
     try:
         request.app[_STATE_KEY].apply_set_function(key, action, duration, value)
     except KeyError:
@@ -132,7 +136,12 @@ async def _handle_set_target(request: web.Request) -> web.Response:
     value_raw = request.query.get("value")
     if not target or value_raw is None:
         return web.Response(status=400, text="missing target or value")
-    request.app[_STATE_KEY].apply_set_target(target, float(value_raw))
+    try:
+        value = float(value_raw)
+    except ValueError:
+        _LOG.debug("setTargetValues got non-numeric value", exc_info=True)
+        return web.Response(status=400, text="value must be numeric")
+    request.app[_STATE_KEY].apply_set_target(target, value)
     return web.json_response({"ok": True})
 
 

@@ -88,7 +88,8 @@ class VioletClient:
         scheme: ``"http"`` (default) or ``"https"``.
 
     Raises:
-        ValueError: if `host` or `scheme` is malformed.
+        ValueError: if `host` or `scheme` is malformed, or if exactly one of
+            `username` / `password` is provided.
     """
 
     def __init__(
@@ -103,6 +104,8 @@ class VioletClient:
     ) -> None:
         scheme = _validate_scheme(scheme)
         hostname, port = _validate_host(host)
+        if (username is None) != (password is None):
+            raise ValueError("username and password must be provided together, or both omitted")
         auth: aiohttp.BasicAuth | None = None
         if username is not None and password is not None:
             auth = SafeBasicAuth(username, password)

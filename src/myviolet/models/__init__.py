@@ -57,6 +57,5 @@ __all__ = [
     "Solar",
     "SwitchingRule",
     "SystemInfo",
-    "SwitchingRule",
     "WaterChemistry",
 ]

@@ -82,6 +82,14 @@ class TestSetFunctionManually:
         async with client.get("/setFunctionManually", params="PUMP,ON,0,0") as resp:
             assert resp.status == 401
 
+    async def test_non_integer_duration_returns_400(self, client: TestClient) -> None:
+        async with client.get(
+            "/setFunctionManually",
+            params="PUMP,ON,not_a_number,0",
+            headers=_basic_header(),
+        ) as resp:
+            assert resp.status == 400
+
 
 class TestSetTargetValues:
     async def test_pH_target_mutates_state(self, client: TestClient) -> None:
@@ -94,6 +102,14 @@ class TestSetTargetValues:
         async with client.get("/getReadings", params="ALL") as resp:
             body = await resp.json()
         assert body.get("pH_target") == 7.2
+
+    async def test_non_numeric_value_returns_400(self, client: TestClient) -> None:
+        async with client.get(
+            "/setTargetValues",
+            params={"target": "pH", "value": "not_a_number"},
+            headers=_basic_header(),
+        ) as resp:
+            assert resp.status == 400
 
 
 class TestGetConfig:

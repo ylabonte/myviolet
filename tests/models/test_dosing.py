@@ -58,3 +58,27 @@ def test_with_dosage_fields() -> None:
 def test_missing_channel_omitted() -> None:
     channels = collect_dosing_channels({})
     assert channels == {}
+
+
+def test_unknown_output_state_skips_channel() -> None:
+    """Forward-compat: an unknown firmware state on a channel drops just that channel."""
+    raw = {
+        "DOS_1_CL": 99,  # unknown firmware OutputState
+        "DOS_1_CL_RUNTIME": "00h 00m 00s",
+        "DOS_4_PHM": 0,
+        "DOS_4_PHM_RUNTIME": "00h 00m 00s",
+    }
+    channels = collect_dosing_channels(raw)
+    assert "CL" not in channels
+    assert "PHM" in channels
+
+
+def test_unknown_dosing_type_surfaces_as_none() -> None:
+    """Forward-compat: an unknown DosingType value should not crash collection."""
+    raw = {
+        "DOS_1_CL": 0,
+        "DOS_1_CL_RUNTIME": "00h 00m 00s",
+        "DOS_1_CL_TYPE": 99,  # unknown firmware DosingType
+    }
+    channels = collect_dosing_channels(raw)
+    assert channels["CL"].type is None

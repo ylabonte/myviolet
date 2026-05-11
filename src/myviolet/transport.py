@@ -66,8 +66,7 @@ class VioletTransport:
     ) -> Any:
         """POST `<base_url><path>` with a JSON body and return parsed JSON.
 
-        The keyword arg is named `json` to match aiohttp's public API; the
-        ``json`` stdlib module is reachable internally as ``json_module``.
+        The keyword arg is named `json` to match aiohttp's public API.
         """
         url = self._base_url.join(URL(path))
         return await self._request("POST", url, json_body=json, timeout=timeout)

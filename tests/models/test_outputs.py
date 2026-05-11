@@ -35,6 +35,24 @@ def test_pump_with_speeds(get_readings_seed: dict) -> None:
     assert speed_2.last_off is None
 
 
+def test_pump_unknown_speed_state_skipped() -> None:
+    """Forward-compat: unknown PUMP_RPM_N enum value drops that speed, not the pump."""
+    raw = {
+        "PUMP": 1,
+        "PUMP_RUNTIME": "00h 00m 00s",
+        "PUMP_RPM_0": 0,
+        "PUMP_RPM_0_RUNTIME": "00h 00m 00s",
+        "PUMP_RPM_1": 99,  # unknown firmware value
+        "PUMP_RPM_1_RUNTIME": "00h 00m 00s",
+        "PUMP_RPM_2": 1,
+        "PUMP_RPM_2_RUNTIME": "00h 00m 00s",
+    }
+    pump = Pump.from_raw(raw)
+    assert pump is not None
+    assert 1 not in pump.speeds
+    assert 0 in pump.speeds and 2 in pump.speeds
+
+
 def test_heater_postrun_none(get_readings_seed: dict) -> None:
     heater = Heater.from_raw(get_readings_seed)
     assert heater is not None

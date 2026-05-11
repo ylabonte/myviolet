@@ -12,7 +12,7 @@ from ..parsers import parse_epoch_seconds
 
 @dataclass(frozen=True, slots=True)
 class OverflowState:
-    """Overflow-vessel control flags (drytrun, overfill, refill triggers)."""
+    """Overflow-vessel control flags (dryrun, overfill, refill triggers)."""
 
     dryrun: SimpleOnOff
     overfill: SimpleOnOff
