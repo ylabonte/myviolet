@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any
 
-from ..parsers import parse_uptime_string
+from ..parsers import parse_epoch_seconds, parse_uptime_string
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,7 +28,7 @@ class SystemInfo:
     sw_version_carrier: str
     hw_version_carrier: str | None = None
     hw_serial_carrier: str | None = None
-    current_time_unix: float | None = None
+    current_time: datetime | None = None
 
     @classmethod
     def from_raw(cls, raw: dict[str, Any]) -> SystemInfo:
@@ -43,13 +43,9 @@ class SystemInfo:
             sw_version_carrier=str(raw.get("SW_VERSION_CARRIER", "")),
             hw_version_carrier=_maybe_str(raw.get("HW_VERSION_CARRIER")),
             hw_serial_carrier=_maybe_str(raw.get("HW_SERIAL_CARRIER")),
-            current_time_unix=_maybe_float(raw.get("CURRENT_TIME_UNIX")),
+            current_time=parse_epoch_seconds(raw.get("CURRENT_TIME_UNIX")),
         )
 
 
 def _maybe_str(value: Any) -> str | None:
     return None if value is None else str(value)
-
-
-def _maybe_float(value: Any) -> float | None:
-    return None if value is None else float(value)

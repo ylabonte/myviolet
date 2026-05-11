@@ -78,7 +78,6 @@ class MockState:
                 "EXT2_",
                 "DOS_",
                 "PVSURPLUS",
-                "LIGHT",
             )
             if not key.startswith(valid_prefixes):
                 raise KeyError(f"unknown control key: {key}")

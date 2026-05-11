@@ -29,7 +29,7 @@ def collect_digital_inputs(raw: dict[str, Any]) -> dict[int, DigitalInput]:
         value = raw.get(f"INPUT{index}")
         if value is None:
             continue
-        result[index] = DigitalInput(index=index, closed=bool(value))
+        result[index] = DigitalInput(index=index, closed=bool(int(value)))
     return result
 
 
@@ -40,5 +40,5 @@ def collect_can_empty_inputs(raw: dict[str, Any]) -> dict[int, CanEmptyInput]:
         value = raw.get(f"INPUT_CE{index}")
         if value is None:
             continue
-        result[index] = CanEmptyInput(index=index, closed=bool(value))
+        result[index] = CanEmptyInput(index=index, closed=bool(int(value)))
     return result

@@ -16,7 +16,11 @@ class Cover:
 
     @classmethod
     def from_raw(cls, raw: dict[str, Any]) -> Cover | None:
+        """Build from `COVER_STATE`. Unknown firmware values return ``None``."""
         state_raw = raw.get("COVER_STATE")
         if state_raw is None:
             return None
-        return cls(state=CoverState(str(state_raw)))
+        try:
+            return cls(state=CoverState(str(state_raw)))
+        except ValueError:
+            return None

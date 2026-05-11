@@ -64,7 +64,11 @@ class VioletTransport:
         json: dict[str, Any] | None = None,
         timeout: float | None = None,
     ) -> Any:
-        """POST `<base_url><path>` with a JSON body and return parsed JSON."""
+        """POST `<base_url><path>` with a JSON body and return parsed JSON.
+
+        The keyword arg is named `json` to match aiohttp's public API; the
+        ``json`` stdlib module is reachable internally as ``json_module``.
+        """
         url = self._base_url.join(URL(path))
         return await self._request("POST", url, json_body=json, timeout=timeout)
 
@@ -97,8 +101,11 @@ async def _parse_response(response: aiohttp.ClientResponse) -> Any:
     if status in (401, 403):
         raise BadCredentialsException(status)
     if status >= 400:
-        body_preview = (await response.text())[:200]
+        body = await response.text()
+        body_preview = body[:200] + ("… (truncated)" if len(body) > 200 else "")
         raise BadStatusCodeException(status, body_preview)
+    # The Violet controller returns JSON with `text/html` content-type; passing
+    # `content_type=None` disables aiohttp's strict check.
     try:
         return await response.json(content_type=None)
     except (json.JSONDecodeError, aiohttp.ContentTypeError) as exc:

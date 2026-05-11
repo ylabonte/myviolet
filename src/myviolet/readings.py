@@ -7,7 +7,9 @@ the same object identity.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from functools import cached_property
+from types import MappingProxyType
 from typing import Any
 
 from .hardware import HardwareProfile
@@ -62,9 +64,14 @@ class VioletReadings:
         self._raw = raw
 
     @property
-    def raw(self) -> dict[str, Any]:
-        """The original `/getReadings` JSON dict from the controller."""
-        return self._raw
+    def raw(self) -> Mapping[str, Any]:
+        """Read-only view of the original `/getReadings` JSON dict.
+
+        Returned as a `MappingProxyType` so callers can read any key
+        (including undocumented or firmware-future ones) but cannot mutate
+        the underlying dict in a way that would corrupt cached typed views.
+        """
+        return MappingProxyType(self._raw)
 
     # ---- system & metadata ------------------------------------------------
 

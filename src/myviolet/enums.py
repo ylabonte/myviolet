@@ -76,7 +76,11 @@ class CoverState(StrEnum):
 
 
 class OnewireState(StrEnum):
-    """Fault state of a 1-wire temperature sensor."""
+    """Fault state of a 1-wire temperature sensor.
+
+    Note: ``DATA_MISSMATCH`` (sic) is spelled with two ``s`` letters to match
+    the wire value emitted verbatim by the controller firmware.
+    """
 
     OK = "OK"
     CRC_FAULT = "CRC_FAULT"

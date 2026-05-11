@@ -1,4 +1,11 @@
-"""Load the captured `/getReadings` snapshot used to seed the mock state."""
+"""Load the captured `/getReadings` snapshot used to seed the mock state.
+
+The default seed (`tests/fixtures/getReadings_seed.json`) was captured from
+the vendor-owned public demo controller at <https://demo.myviolet.de/>. It
+contains no customer data — see `tests/fixtures/README.md` for the
+provenance note and the sanitisation policy that applies if you add a
+seed from a different controller.
+"""
 
 from __future__ import annotations
 

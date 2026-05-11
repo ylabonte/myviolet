@@ -8,6 +8,7 @@ mutate the state so subsequent reads see the change.
 from __future__ import annotations
 
 import base64
+import hmac
 import time
 from typing import Any
 
@@ -72,7 +73,8 @@ def _valid_basic_auth(header: str, username: str, password: str) -> bool:
     except (ValueError, UnicodeDecodeError):
         return False
     expected = f"{username}:{password}"
-    return decoded == expected
+    # Constant-time compare to avoid leaking credentials byte-by-byte via timing.
+    return hmac.compare_digest(decoded, expected)
 
 
 async def _handle_get_readings(request: web.Request) -> web.Response:

@@ -66,18 +66,29 @@ class OutputBase:
     def from_raw(cls, raw: dict[str, Any], key_base: str) -> OutputBase | None:
         """Assemble from ``<key_base>``, ``_LAST_ON``, ``_LAST_OFF``, ``_RUNTIME``.
 
-        Returns ``None`` when the canonical state key is absent, indicating
-        the output is not installed on this controller.
+        Returns ``None`` when the canonical state key is absent (output not
+        installed) **or** when the controller emits an `OutputState` value
+        not in our documented enum — that lets the typed view layer stay
+        forward-compatible with future firmware revisions instead of
+        crashing the entire snapshot.
         """
-        state = raw.get(key_base)
-        if state is None:
+        state_raw = raw.get(key_base)
+        if state_raw is None:
+            return None
+        try:
+            state = OutputState(int(state_raw))
+        except (ValueError, TypeError):
             return None
         runtime_raw = raw.get(f"{key_base}_RUNTIME", "00h 00m 00s")
+        try:
+            runtime = parse_runtime_string(runtime_raw)
+        except ValueError:
+            runtime = timedelta(0)
         return cls(
-            state=OutputState(int(state)),
+            state=state,
             last_on=parse_epoch_seconds(raw.get(f"{key_base}_LAST_ON")),
             last_off=parse_epoch_seconds(raw.get(f"{key_base}_LAST_OFF")),
-            runtime=parse_runtime_string(runtime_raw),
+            runtime=runtime,
         )
 
 

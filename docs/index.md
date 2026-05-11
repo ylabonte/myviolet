@@ -32,11 +32,12 @@ async def main() -> None:
             password="...",
         ) as client:
             snapshot = await client.readings.get()
-
-    print(f"pH: {snapshot.water_chemistry.ph.value}")
-    print(f"ORP: {snapshot.water_chemistry.orp.value} mV")
-    if snapshot.pump.state.is_on:
-        print(f"Pump running for {snapshot.pump.runtime}")
+            if snapshot.water_chemistry.ph is not None:
+                print(f"pH:  {snapshot.water_chemistry.ph.value}")
+            if snapshot.water_chemistry.orp is not None:
+                print(f"ORP: {snapshot.water_chemistry.orp.value} mV")
+            if snapshot.pump is not None and snapshot.pump.state.is_on:
+                print(f"Pump running for {snapshot.pump.runtime}")
 
 asyncio.run(main())
 ```

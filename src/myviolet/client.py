@@ -8,6 +8,7 @@ instance, so retries / observability hooks can be added in one place.
 
 from __future__ import annotations
 
+import re
 from functools import cached_property
 from types import TracebackType
 from typing import Any
@@ -16,10 +17,59 @@ import aiohttp
 from yarl import URL
 
 from . import constants
+from ._safe_auth import SafeBasicAuth
 from .exceptions import UnsafeOperationException
 from .readings import VioletReadings
 from .transport import VioletTransport
 from .validators import validate_setpoint
+
+# Hostname (RFC 1123 simplified) or IPv4 literal, optional :port
+_HOST_RE = re.compile(
+    r"^(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)"
+    r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*"
+    r"(?::\d{1,5})?$"
+)
+_ALLOWED_SCHEMES = frozenset({"http", "https"})
+
+# Control keys are uppercase identifiers; subscripts like `EXT1_3` use `_`.
+_CONTROL_KEY_RE = re.compile(r"^[A-Z][A-Z0-9_]*$")
+
+
+def _validate_control_key(key: str) -> str:
+    if not isinstance(key, str) or not _CONTROL_KEY_RE.match(key):
+        raise ValueError(f"invalid control key {key!r}; must match [A-Z][A-Z0-9_]*")
+    return key
+
+
+def _validate_control_action(action: str) -> str:
+    if action not in constants.CONTROL_ACTIONS:
+        raise ValueError(f"unknown action {action!r}; allowed: {sorted(constants.CONTROL_ACTIONS)}")
+    return action
+
+
+def _validate_host(host: str) -> tuple[str, int | None]:
+    """Validate `host` and split it into ``(hostname, optional port)``.
+
+    Rejects userinfo (``user@host``), paths/queries/fragments, whitespace,
+    and control characters — accepting only a bare hostname or IPv4 literal,
+    optionally followed by ``:port``. This guards against URL smuggling
+    when `host` is sourced from a config-flow text field.
+    """
+    if not isinstance(host, str) or not host or not _HOST_RE.match(host):
+        raise ValueError(f"invalid host: {host!r}")
+    if ":" in host:
+        hostname, _, port_str = host.rpartition(":")
+        port = int(port_str)
+        if not (0 < port < 65536):
+            raise ValueError(f"port out of range: {port}")
+        return hostname, port
+    return host, None
+
+
+def _validate_scheme(scheme: str) -> str:
+    if scheme not in _ALLOWED_SCHEMES:
+        raise ValueError(f"invalid scheme {scheme!r}; allowed: {sorted(_ALLOWED_SCHEMES)}")
+    return scheme
 
 
 class VioletClient:
@@ -28,11 +78,17 @@ class VioletClient:
     Args:
         session: A reusable `aiohttp.ClientSession`. The client does not own
             the session; the caller is responsible for closing it.
-        host: Hostname or IP of the controller (e.g. ``"violet.local"``).
+        host: Hostname or IP of the controller (e.g. ``"violet.local"`` or
+            ``"violet.local:8080"``). Must be a bare hostname/IP with an
+            optional ``:port`` suffix — userinfo, paths, queries, and other
+            URL components are rejected to prevent URL smuggling.
         username: Optional. Required for write endpoints and `/getConfig`.
         password: Optional. Required if `username` is set.
         timeout: Default per-request timeout in seconds.
         scheme: ``"http"`` (default) or ``"https"``.
+
+    Raises:
+        ValueError: if `host` or `scheme` is malformed.
     """
 
     def __init__(
@@ -45,13 +101,21 @@ class VioletClient:
         timeout: float = 10.0,
         scheme: str = "http",
     ) -> None:
+        scheme = _validate_scheme(scheme)
+        hostname, port = _validate_host(host)
         auth: aiohttp.BasicAuth | None = None
         if username is not None and password is not None:
-            auth = aiohttp.BasicAuth(username, password)
-        base_url = URL(f"{scheme}://{host}")
+            auth = SafeBasicAuth(username, password)
+        base_url = URL.build(scheme=scheme, host=hostname, port=port)
         self._transport = VioletTransport(session, base_url, auth=auth, default_timeout=timeout)
 
     async def __aenter__(self) -> VioletClient:
+        """No-op. The aiohttp session lifecycle is the caller's responsibility.
+
+        Implemented so callers can use ``async with VioletClient(...) as client``
+        as a stylistic convention. If you add per-request retry pools or
+        connection caches in the future, this is where setup/teardown belongs.
+        """
         return self
 
     async def __aexit__(
@@ -81,8 +145,10 @@ class VioletClient:
         return _ConfigNamespace(self._transport)
 
     @cached_property
-    def dosing(self) -> _DosingNamespace:
-        return _DosingNamespace(self._transport)
+    def dosing_parameters(self) -> _DosingParametersNamespace:
+        """`/setDosingParameters` writes. Distinct from `client.control.dosing`,
+        which dispatches per-channel ON/OFF/AUTO commands."""
+        return _DosingParametersNamespace(self._transport)
 
     @cached_property
     def history(self) -> _HistoryNamespace:
@@ -125,8 +191,15 @@ class _ControlNamespace:
         *,
         timeout: float | None = None,
     ) -> Any:
-        """Generic escape hatch for `/setFunctionManually?<KEY>,<ACTION>,<DURATION>,<VALUE>`."""
-        query = f"{key},{action},{duration},{value}"
+        """Generic escape hatch for `/setFunctionManually?<KEY>,<ACTION>,<DURATION>,<VALUE>`.
+
+        Raises `ValueError` if `key` is not an uppercase identifier or `action`
+        is not in `constants.CONTROL_ACTIONS`. `duration` and `value` are
+        coerced to ints — fractional values are not supported by the vendor.
+        """
+        _validate_control_key(key)
+        _validate_control_action(action)
+        query = f"{key},{action},{int(duration)},{int(value)}"
         return await self._transport.get(
             constants.PATH_SET_FUNCTION_MANUALLY, query=query, timeout=timeout
         )
@@ -191,8 +264,8 @@ class _ControlNamespace:
         acknowledge_unsafe: bool = False,
         timeout: float | None = None,
     ) -> Any:
-        """Open the cover. Requires `acknowledge_unsafe=True` to confirm safety logic."""
-        if not acknowledge_unsafe:
+        """Open the cover. Pass literal `acknowledge_unsafe=True` to confirm."""
+        if acknowledge_unsafe is not True:
             raise UnsafeOperationException("cover_open")
         return await self.set_function(
             constants.CONTROL_KEY_COVER_OPEN, "PUSH", 0, 0, timeout=timeout
@@ -204,8 +277,8 @@ class _ControlNamespace:
         acknowledge_unsafe: bool = False,
         timeout: float | None = None,
     ) -> Any:
-        """Close the cover. Requires `acknowledge_unsafe=True` to confirm safety logic."""
-        if not acknowledge_unsafe:
+        """Close the cover. Pass literal `acknowledge_unsafe=True` to confirm."""
+        if acknowledge_unsafe is not True:
             raise UnsafeOperationException("cover_close")
         return await self.set_function(
             constants.CONTROL_KEY_COVER_CLOSE, "PUSH", 0, 0, timeout=timeout
@@ -278,16 +351,14 @@ class _ConfigNamespace:
         return await self._transport.post(constants.PATH_SET_CONFIG, json=config, timeout=timeout)
 
 
-class _DosingNamespace:
+class _DosingParametersNamespace:
+    """Namespace for `/setDosingParameters` writes (dosing config, not per-channel control)."""
+
     def __init__(self, transport: VioletTransport) -> None:
         self._transport = transport
 
-    async def set_parameters(
-        self,
-        params: dict[str, Any],
-        *,
-        timeout: float | None = None,
-    ) -> Any:
+    async def set(self, params: dict[str, Any], *, timeout: float | None = None) -> Any:
+        """POST a dosing-parameters payload to `/setDosingParameters`."""
         return await self._transport.post(
             constants.PATH_SET_DOSING_PARAMETERS, json=params, timeout=timeout
         )

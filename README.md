@@ -12,7 +12,8 @@
 Async Python library for the [Pooldigital Violet pool controller](https://www.pooldigital.de/poolsteuerungen/violet-poolsteuerung/) — the successor to the ProCon.IP unit ([sister library: `proconip`](https://github.com/ylabonte/proconip-pypi)). Primarily intended as the foundation for a Home Assistant integration, but usable on its own for any Python application that talks to the controller.
 
 - **Documentation**: <https://ylabonte.github.io/myviolet/>
-- **Live demo controller**: <https://demo.myviolet.de/getReadings?ALL>
+- **Live demo controller** (vendor-owned): <https://demo.myviolet.de/getReadings?ALL>
+- **Pooldigital community forum** (DE) — links to manuals, demo system, and discussions: <https://www.poolsteuerung.de/>
 
 ## Requirements
 
@@ -46,11 +47,12 @@ async def main() -> None:
             password="...",
         ) as client:
             snapshot = await client.readings.get()
-
-    print(f"pH:  {snapshot.water_chemistry.ph.value}")
-    print(f"ORP: {snapshot.water_chemistry.orp.value} mV")
-    if snapshot.pump.state.is_on:
-        print(f"Pump running for {snapshot.pump.runtime}")
+            if snapshot.water_chemistry.ph is not None:
+                print(f"pH:  {snapshot.water_chemistry.ph.value}")
+            if snapshot.water_chemistry.orp is not None:
+                print(f"ORP: {snapshot.water_chemistry.orp.value} mV")
+            if snapshot.pump is not None and snapshot.pump.state.is_on:
+                print(f"Pump running for {snapshot.pump.runtime}")
 
 asyncio.run(main())
 ```

@@ -1,4 +1,9 @@
-"""Shared pytest fixtures for the myviolet test suite."""
+"""Shared pytest fixtures for the myviolet test suite.
+
+The `getReadings_*.json` files served by these fixtures were captured from
+the vendor-owned public demo controller at <https://demo.myviolet.de/>.
+See `tests/fixtures/README.md` for provenance and sanitisation guidance.
+"""
 
 from __future__ import annotations
 

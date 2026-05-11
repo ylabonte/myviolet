@@ -21,7 +21,10 @@ def main() -> None:
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
-    host = _env("MYVIOLET_MOCK_HOST", "0.0.0.0")
+    # Default to loopback so running the mock on a workstation doesn't open
+    # an `admin/admin` listener on the LAN. The devcontainer overrides this
+    # via env var (MYVIOLET_MOCK_HOST=0.0.0.0) so port forwarding works.
+    host = _env("MYVIOLET_MOCK_HOST", "127.0.0.1")
     port = int(_env("MYVIOLET_MOCK_PORT", "8080"))
     username = _env("MYVIOLET_MOCK_USER", "admin")
     password = _env("MYVIOLET_MOCK_PASS", "admin")

@@ -8,7 +8,8 @@ from myviolet.readings import VioletReadings
 
 def test_wraps_raw_dict(get_readings_seed: dict) -> None:
     snapshot = VioletReadings(get_readings_seed)
-    assert snapshot.raw is get_readings_seed
+    # `.raw` exposes the same contents but as a read-only mapping
+    assert dict(snapshot.raw) == get_readings_seed
 
 
 def test_water_chemistry(get_readings_seed: dict) -> None:

@@ -12,23 +12,13 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any
 
+from ..constants import DOSING_CHANNELS as _CHANNELS
 from ..enums import DosingType, OutputState
 from ..parsers import (
     parse_epoch_milliseconds,
     parse_epoch_seconds,
     parse_runtime_string,
 )
-
-# Channel number → textual code. Documented in the vendor spec plus the
-# observed `DOS_3_ELO_REV` reverse-dosing channel.
-_CHANNELS: dict[int, str] = {
-    1: "CL",
-    2: "ELO",
-    3: "ELO_REV",
-    4: "PHM",
-    5: "PHP",
-    6: "FLOC",
-}
 
 
 @dataclass(frozen=True, slots=True)
