@@ -51,9 +51,7 @@ class TestSetpointValidationError:
         assert issubclass(SetpointValidationError, ValueError)
 
     def test_message_includes_field_and_bounds(self) -> None:
-        with pytest.raises(SetpointValidationError) as excinfo:
-            raise SetpointValidationError("pH", 8.5, 6.8, 7.8)
-        msg = str(excinfo.value)
+        msg = str(SetpointValidationError("pH", 8.5, 6.8, 7.8))
         assert "pH" in msg
         assert "8.5" in msg
         assert "6.8" in msg

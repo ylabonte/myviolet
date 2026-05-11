@@ -6,7 +6,6 @@ import aiohttp
 import pytest
 
 import myviolet
-from myviolet import VioletClient
 
 
 class TestForwardCompatibleEnums:
@@ -48,7 +47,7 @@ class TestNamespaceDisambiguation:
     async def test_dosing_parameters_namespace_exists(self) -> None:
         session = aiohttp.ClientSession()
         try:
-            async with VioletClient(session, host="violet.local") as client:
+            async with myviolet.VioletClient(session, host="violet.local") as client:
                 # The namespace for /setDosingParameters
                 assert hasattr(client, "dosing_parameters")
                 assert hasattr(client.dosing_parameters, "set")
@@ -94,7 +93,7 @@ class TestStrictAckUnsafe:
 
         session = aiohttp.ClientSession()
         try:
-            async with VioletClient(session, host="violet.local") as client:
+            async with myviolet.VioletClient(session, host="violet.local") as client:
                 with pytest.raises(UnsafeOperationException):
                     await client.control.cover_open(
                         acknowledge_unsafe="yes"  # type: ignore[arg-type]
@@ -107,7 +106,7 @@ class TestStrictAckUnsafe:
 
         session = aiohttp.ClientSession()
         try:
-            async with VioletClient(session, host="violet.local") as client:
+            async with myviolet.VioletClient(session, host="violet.local") as client:
                 with pytest.raises(UnsafeOperationException):
                     await client.control.cover_open(
                         acknowledge_unsafe=1  # type: ignore[arg-type]

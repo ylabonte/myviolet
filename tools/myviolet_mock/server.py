@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import base64
 import hmac
+import logging
 import time
 from typing import Any
 
@@ -25,6 +26,8 @@ from myviolet.constants import (
 
 from .drift import apply_drift
 from .state import MockState
+
+_LOG = logging.getLogger(__name__)
 
 _STATE_KEY = web.AppKey("state", MockState)
 _USERNAME_KEY = web.AppKey("username", str)
@@ -117,8 +120,10 @@ async def _handle_set_function(request: web.Request) -> web.Response:
     value = int(parts[3]) if len(parts) > 3 and parts[3] else 0
     try:
         request.app[_STATE_KEY].apply_set_function(key, action, duration, value)
-    except KeyError as exc:
-        return web.Response(status=400, text=str(exc))
+    except KeyError:
+        # Don't echo exception details back to the client (CodeQL py/stack-trace-exposure).
+        _LOG.warning("setFunctionManually rejected", exc_info=True)
+        return web.Response(status=400, text="unknown control key")
     return web.json_response({"ok": True})
 
 
