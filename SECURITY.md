@@ -7,7 +7,8 @@ versions.
 
 ## Reporting a Vulnerability
 
-If you identify a vulnerability, please consider that this may affect other
-people/projects as well. This in mind please email me (Yannic Labonte
-<yannic.labonte@gmail.com>) first, so I can react and maybe fix the issue,
-before publishing it to the public (e.g. in a github issue).
+If you identify a vulnerability, please consider that it may affect other
+people and projects as well. With this in mind, please email me first
+(Yannic Labonte <yannic.labonte@gmail.com>) so I can react and, if
+possible, fix the issue before it is published — for example, in a public
+GitHub issue.

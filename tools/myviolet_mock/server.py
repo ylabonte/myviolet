@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import base64
 import hmac
+import json
 import logging
 import time
 from typing import Any
@@ -146,12 +147,28 @@ async def _handle_set_target(request: web.Request) -> web.Response:
 
 
 async def _handle_set_config(request: web.Request) -> web.Response:
-    payload = await request.json()
+    payload = await _read_json(request)
+    if isinstance(payload, web.Response):
+        return payload
     request.app[_STATE_KEY].apply_set_config(payload)
     return web.json_response({"ok": True})
 
 
 async def _handle_set_dosing_parameters(request: web.Request) -> web.Response:
-    payload = await request.json()
+    payload = await _read_json(request)
+    if isinstance(payload, web.Response):
+        return payload
     request.app[_STATE_KEY].apply_set_dosing_parameters(payload)
     return web.json_response({"ok": True})
+
+
+async def _read_json(request: web.Request) -> dict[str, Any] | web.Response:
+    """Return the request body as a JSON dict, or a 400 response on bad input."""
+    try:
+        payload = await request.json()
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        _LOG.debug("invalid JSON body", exc_info=True)
+        return web.Response(status=400, text="invalid JSON body")
+    if not isinstance(payload, dict):
+        return web.Response(status=400, text="JSON body must be an object")
+    return payload

@@ -1,9 +1,12 @@
 """`VioletClient` — the public async client for the Violet pool controller.
 
 The client is constructed once per controller and exposes domain-grouped
-namespaces (`readings`, `control`, `targets`, `config`, `dosing`,
-`calibration`, `history`). All namespaces share a single `VioletTransport`
-instance, so retries / observability hooks can be added in one place.
+namespaces (`readings`, `control`, `targets`, `config`, `dosing_parameters`,
+`history`, `calibration`). Per-channel dosing ON/OFF/AUTO lives under
+`client.control.dosing`; `client.dosing_parameters` handles
+`/setDosingParameters` writes. All namespaces share a single
+`VioletTransport` instance, so retries / observability hooks can be added
+in one place.
 """
 
 from __future__ import annotations

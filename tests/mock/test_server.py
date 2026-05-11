@@ -132,3 +132,19 @@ class TestSetConfig:
         async with client.get("/getConfig", headers=_basic_header()) as resp:
             body = await resp.json()
         assert body["newKey"] == "value"
+
+    async def test_invalid_json_returns_400(self, client: TestClient) -> None:
+        async with client.post(
+            "/setConfig",
+            data=b"{not valid json",
+            headers={**_basic_header(), "Content-Type": "application/json"},
+        ) as resp:
+            assert resp.status == 400
+
+    async def test_non_object_json_returns_400(self, client: TestClient) -> None:
+        async with client.post(
+            "/setConfig",
+            json=[1, 2, 3],
+            headers=_basic_header(),
+        ) as resp:
+            assert resp.status == 400
