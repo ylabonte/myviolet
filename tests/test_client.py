@@ -184,6 +184,107 @@ class TestConfigNamespace:
             await session.close()
 
 
+class TestHistoryNamespace:
+    async def test_get_hours_only(self) -> None:
+        session = aiohttp.ClientSession()
+        try:
+            with aioresponses() as mock:
+                mock.get("http://violet.local/getHistory?hours=24", payload={"rows": []})
+                async with VioletClient(
+                    session, host="violet.local", username="admin", password="secret"
+                ) as client:
+                    result = await client.history.get(24)
+                assert result == {"rows": []}
+        finally:
+            await session.close()
+
+    async def test_get_with_sensor(self) -> None:
+        session = aiohttp.ClientSession()
+        try:
+            with aioresponses() as mock:
+                mock.get(
+                    "http://violet.local/getHistory?hours=24&sensor=pH",
+                    payload={"rows": [{"t": 0, "v": 7.3}]},
+                )
+                async with VioletClient(
+                    session, host="violet.local", username="admin", password="secret"
+                ) as client:
+                    result = await client.history.get(24, sensor="pH")
+                assert result == {"rows": [{"t": 0, "v": 7.3}]}
+        finally:
+            await session.close()
+
+    async def test_sensor_param_is_url_encoded(self) -> None:
+        """A `sensor` value with `&`/`=` must be encoded, not smuggled in."""
+        session = aiohttp.ClientSession()
+        try:
+            with aioresponses() as mock:
+                # If encoding works, the literal request goes to the safe URL below.
+                # If it didn't, the request would hit ?hours=24&sensor=x&hours=999
+                # and this mock wouldn't match.
+                mock.get(
+                    "http://violet.local/getHistory?hours=24&sensor=x%26hours%3D999",
+                    payload={"ok": True},
+                )
+                async with VioletClient(
+                    session, host="violet.local", username="admin", password="secret"
+                ) as client:
+                    result = await client.history.get(24, sensor="x&hours=999")
+                assert result == {"ok": True}
+        finally:
+            await session.close()
+
+
+class TestCalibrationNamespace:
+    async def test_raw_values(self) -> None:
+        session = aiohttp.ClientSession()
+        try:
+            with aioresponses() as mock:
+                mock.get(
+                    "http://violet.local/getCalibrationRawValues",
+                    payload={"ADC1_raw": 0.48},
+                )
+                async with VioletClient(
+                    session, host="violet.local", username="admin", password="secret"
+                ) as client:
+                    result = await client.calibration.raw_values()
+                assert result == {"ADC1_raw": 0.48}
+        finally:
+            await session.close()
+
+    async def test_history_uses_sensor_param(self) -> None:
+        session = aiohttp.ClientSession()
+        try:
+            with aioresponses() as mock:
+                mock.get(
+                    "http://violet.local/getCalibrationHistory?sensor=pH",
+                    payload={"rows": []},
+                )
+                async with VioletClient(
+                    session, host="violet.local", username="admin", password="secret"
+                ) as client:
+                    result = await client.calibration.history("pH")
+                assert result == {"rows": []}
+        finally:
+            await session.close()
+
+    async def test_history_sensor_is_url_encoded(self) -> None:
+        session = aiohttp.ClientSession()
+        try:
+            with aioresponses() as mock:
+                mock.get(
+                    "http://violet.local/getCalibrationHistory?sensor=x%26evil%3D1",
+                    payload={"ok": True},
+                )
+                async with VioletClient(
+                    session, host="violet.local", username="admin", password="secret"
+                ) as client:
+                    result = await client.calibration.history("x&evil=1")
+                assert result == {"ok": True}
+        finally:
+            await session.close()
+
+
 class TestClientLifecycle:
     async def test_context_manager_returns_self(self) -> None:
         session = aiohttp.ClientSession()

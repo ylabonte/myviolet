@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from collections.abc import Mapping
 from typing import Any
 
 import aiohttp
@@ -43,14 +44,17 @@ class VioletTransport:
         self,
         path: str,
         *,
-        query: str | None = None,
+        query: str | Mapping[str, Any] | None = None,
         timeout: float | None = None,
     ) -> Any:
         """GET `<base_url><path>?<query>` and return parsed JSON.
 
         The Violet API uses raw comma-separated query strings (e.g.
-        ``?ALL,DOSAGE,RUNTIMES``) rather than ``key=value`` pairs, so this
-        method accepts the query as a single raw string.
+        ``?ALL,DOSAGE,RUNTIMES``) rather than ``key=value`` pairs — pass
+        those as a raw `str` (yarl treats strings as already-encoded).
+        For standard ``key=value&...`` queries pass a mapping; yarl will
+        URL-encode keys and values safely so callers can't smuggle
+        extra parameters through unescaped ``&`` / ``=`` characters.
         """
         url = self._base_url.join(URL(path))
         if query is not None:

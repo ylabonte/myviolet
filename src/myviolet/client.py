@@ -325,9 +325,10 @@ class _TargetsNamespace:
 
     async def _set(self, field: str, value: float, *, timeout: float | None) -> Any:
         validate_setpoint(field, value)
-        query = f"target={field}&value={value}"
         return await self._transport.get(
-            constants.PATH_SET_TARGET_VALUES, query=query, timeout=timeout
+            constants.PATH_SET_TARGET_VALUES,
+            query={"target": field, "value": value},
+            timeout=timeout,
         )
 
     async def set_ph(self, value: float, *, timeout: float | None = None) -> Any:
@@ -381,12 +382,10 @@ class _HistoryNamespace:
         sensor: str | None = None,
         timeout: float | None = None,
     ) -> Any:
-        query_parts = [f"hours={hours}"]
+        query: dict[str, Any] = {"hours": hours}
         if sensor is not None:
-            query_parts.append(f"sensor={sensor}")
-        return await self._transport.get(
-            constants.PATH_GET_HISTORY, query="&".join(query_parts), timeout=timeout
-        )
+            query["sensor"] = sensor
+        return await self._transport.get(constants.PATH_GET_HISTORY, query=query, timeout=timeout)
 
 
 class _CalibrationNamespace:
@@ -399,6 +398,6 @@ class _CalibrationNamespace:
     async def history(self, sensor: str, *, timeout: float | None = None) -> Any:
         return await self._transport.get(
             constants.PATH_GET_CALIBRATION_HISTORY,
-            query=f"sensor={sensor}",
+            query={"sensor": sensor},
             timeout=timeout,
         )
