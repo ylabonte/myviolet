@@ -10,7 +10,7 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from myviolet.constants import DOSING_CHANNELS, UNSAFE_COVER_KEYS
+from myviolet.constants import UNSAFE_COVER_KEYS
 from myviolet.enums import CoverState, OutputState
 
 _ACTION_TO_STATE: dict[str, OutputState] = {
@@ -119,5 +119,4 @@ class MockState:
         self._dosing_parameters.update(payload)
 
 
-# Re-export for completeness
-__all__ = ["DOSING_CHANNELS", "MockState"]
+__all__ = ["MockState"]

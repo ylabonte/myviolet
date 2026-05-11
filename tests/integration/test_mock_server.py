@@ -56,12 +56,13 @@ async def mock_server() -> AsyncIterator[tuple[str, int, str, str]]:
         "MYVIOLET_MOCK_USER": user,
         "MYVIOLET_MOCK_PASS": password,
     }
+    # Inherit stdout/stderr so a noisy mock crash (e.g. import-time traceback)
+    # is visible in pytest's captured output instead of deadlocking on a full
+    # PIPE buffer that nothing drains.
     proc = subprocess.Popen(
         [PYTHON, "-m", "tools.myviolet_mock"],
         cwd=REPO_ROOT,
         env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
     )
     try:
         await _wait_for_port("127.0.0.1", port)
