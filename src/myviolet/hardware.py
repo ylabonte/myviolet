@@ -57,7 +57,7 @@ class HardwareProfile:
             extension_relays_per_bus=_extension_relay_counts(raw),
             digital_input_count=sum(1 for i in range(1, 13) if f"INPUT{i}" in raw),
             can_empty_input_count=sum(1 for i in range(1, 5) if f"INPUT_CE{i}" in raw),
-            analog_sensor_count=sum(1 for i in range(1, 6) if f"ADC{i}_value" in raw),
+            analog_sensor_count=sum(1 for i in range(1, 7) if f"ADC{i}_value" in raw),
         )
 
 

@@ -16,11 +16,13 @@ from myviolet.models.sensors import (
 
 def test_analog_sensor_collect(get_readings_seed: dict) -> None:
     sensors = collect_analog_sensors(get_readings_seed)
-    # ADC1..ADC5 may be present; at least one should be
+    # The live demo emits ADC1..ADC6; older firmware may only expose ADC1..ADC5
     assert len(sensors) >= 1
     for idx, sensor in sensors.items():
-        assert 1 <= idx <= 5
+        assert 1 <= idx <= 6
         assert isinstance(sensor, AnalogSensor)
+    # ADC6 is present in the bundled seed; make sure we don't drop it on the floor
+    assert 6 in sensors
 
 
 def test_impulse_input_collect(get_readings_seed: dict) -> None:

@@ -11,7 +11,7 @@ from ._common import MeasuredValue
 
 @dataclass(frozen=True, slots=True)
 class AnalogSensor:
-    """One of the 5 analog sensor channels (`ADC1`-`ADC5`)."""
+    """One of the 6 analog sensor channels (`ADC1`-`ADC6`)."""
 
     index: int
     value: float
@@ -49,9 +49,9 @@ class OneWireSensor:
 
 
 def collect_analog_sensors(raw: dict[str, Any]) -> dict[int, AnalogSensor]:
-    """Return ADC sensors keyed by index (1-5), present-only."""
+    """Return ADC sensors keyed by index (1-6), present-only."""
     result: dict[int, AnalogSensor] = {}
-    for idx in range(1, 6):
+    for idx in range(1, 7):
         value = raw.get(f"ADC{idx}_value")
         if value is None:
             continue
