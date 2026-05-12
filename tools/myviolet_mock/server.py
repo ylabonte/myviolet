@@ -8,6 +8,7 @@ mutate the state so subsequent reads see the change.
 from __future__ import annotations
 
 import base64
+import binascii
 import hmac
 import json
 import logging
@@ -73,8 +74,10 @@ def _valid_basic_auth(header: str, username: str, password: str) -> bool:
     if not header.startswith("Basic "):
         return False
     try:
-        decoded = base64.b64decode(header[6:]).decode("utf-8")
-    except (ValueError, UnicodeDecodeError):
+        decoded = base64.b64decode(header[6:], validate=True).decode("utf-8")
+    except (binascii.Error, ValueError, UnicodeDecodeError):
+        # `binascii.Error` covers padding / non-base64 alphabet rejections from
+        # `validate=True`; the others guard the subsequent UTF-8 decode.
         return False
     expected = f"{username}:{password}"
     # Constant-time compare to avoid leaking credentials byte-by-byte via timing.

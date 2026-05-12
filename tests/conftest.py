@@ -17,7 +17,7 @@ FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
 def _load_json(name: str) -> dict[str, Any]:
-    with (FIXTURES_DIR / name).open() as fh:
+    with (FIXTURES_DIR / name).open(encoding="utf-8") as fh:
         return json.load(fh)  # type: ignore[no-any-return]
 
 

@@ -82,6 +82,15 @@ class TestSetFunctionManually:
         async with client.get("/setFunctionManually", params="PUMP,ON,0,0") as resp:
             assert resp.status == 401
 
+    async def test_malformed_basic_auth_returns_401(self, client: TestClient) -> None:
+        """Garbage base64 in the Authorization header must surface as 401, not 500."""
+        async with client.get(
+            "/setFunctionManually",
+            params="PUMP,ON,0,0",
+            headers={"Authorization": "Basic ===not-valid-base64==="},
+        ) as resp:
+            assert resp.status == 401
+
     async def test_non_integer_duration_returns_400(self, client: TestClient) -> None:
         async with client.get(
             "/setFunctionManually",
