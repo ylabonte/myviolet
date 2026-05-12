@@ -36,3 +36,27 @@ def test_negative_stopwatch_is_none() -> None:
     }
     rules = collect_switching_rules(raw)
     assert rules[1].remaining is None
+
+
+def test_unknown_rule_state_skips_just_that_rule() -> None:
+    """Forward-compat: a new firmware rule state drops that rule, not the others."""
+    raw = {
+        "DIGITALINPUTRULE_STATE_DIGITALINPUT_RULE_1": 99,  # unknown firmware state
+        "DIGITALINPUTRULE_STATE_DIGITALINPUT_RULE_STOPWATCH1": -1.0,
+        "DIGITALINPUTRULE_STATE_DIGITALINPUT_RULE_2": 0,
+        "DIGITALINPUTRULE_STATE_DIGITALINPUT_RULE_STOPWATCH2": -1.0,
+    }
+    rules = collect_switching_rules(raw)
+    assert 1 not in rules
+    assert 2 in rules
+
+
+def test_non_numeric_stopwatch_degrades_to_none() -> None:
+    """A non-numeric stopwatch must not crash collection — surface as `None`."""
+    raw = {
+        "DIGITALINPUTRULE_STATE_DIGITALINPUT_RULE_1": 1,
+        "DIGITALINPUTRULE_STATE_DIGITALINPUT_RULE_STOPWATCH1": "garbage",
+    }
+    rules = collect_switching_rules(raw)
+    assert rules[1].state is RuleState.ACTIVE
+    assert rules[1].remaining is None

@@ -23,6 +23,10 @@ def collect_switching_rules(raw: dict[str, Any]) -> dict[int, SwitchingRule]:
 
     The vendor encodes a negative stopwatch value as "runtime is up"; this
     parser maps that to ``remaining = None`` so callers can use truthiness.
+
+    Forward-compat: a rule whose ``state`` is an unknown firmware value is
+    skipped (the rest of the rules still parse); a non-numeric stopwatch
+    degrades to ``remaining = None`` rather than crashing.
     """
     result: dict[int, SwitchingRule] = {}
     for index in range(1, 8):
@@ -31,13 +35,18 @@ def collect_switching_rules(raw: dict[str, Any]) -> dict[int, SwitchingRule]:
         state_raw = raw.get(state_key)
         if state_raw is None:
             continue
+        try:
+            state = RuleState(int(state_raw))
+        except (ValueError, TypeError):
+            continue
         stopwatch_raw = raw.get(stopwatch_key)
         remaining: timedelta | None = None
-        if stopwatch_raw is not None and float(stopwatch_raw) >= 0:
-            remaining = timedelta(seconds=float(stopwatch_raw))
-        result[index] = SwitchingRule(
-            index=index,
-            state=RuleState(int(state_raw)),
-            remaining=remaining,
-        )
+        if stopwatch_raw is not None:
+            try:
+                stopwatch_seconds = float(stopwatch_raw)
+            except (ValueError, TypeError):
+                stopwatch_seconds = -1.0  # treat as "timer is up"
+            if stopwatch_seconds >= 0:
+                remaining = timedelta(seconds=stopwatch_seconds)
+        result[index] = SwitchingRule(index=index, state=state, remaining=remaining)
     return result
