@@ -52,12 +52,23 @@ def test_with_dosage_fields() -> None:
     assert cl.total_can_amount_ml == 4500
     assert cl.last_can_reset is not None
     assert cl.enabled is True
-    assert cl.state_blocks == ["BLOCKED_BY_PUMP_OFF"]
+    assert cl.state_blocks == ("BLOCKED_BY_PUMP_OFF",)
 
 
 def test_missing_channel_omitted() -> None:
     channels = collect_dosing_channels({})
     assert channels == {}
+
+
+def test_state_blocks_is_immutable() -> None:
+    raw = {
+        "DOS_1_CL": 0,
+        "DOS_1_CL_RUNTIME": "00h 00m 00s",
+        "DOS_1_CL_STATE": ["BLOCKED_BY_PUMP_OFF"],
+    }
+    cl = collect_dosing_channels(raw)["CL"]
+    assert cl.state_blocks == ("BLOCKED_BY_PUMP_OFF",)
+    assert isinstance(cl.state_blocks, tuple)
 
 
 def test_unknown_output_state_skips_channel() -> None:

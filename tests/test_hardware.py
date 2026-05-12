@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from myviolet.hardware import HardwareProfile
 
 
@@ -38,3 +40,16 @@ def test_from_empty() -> None:
     profile = HardwareProfile.from_raw({})
     assert profile.has_pump is False
     assert profile.digital_input_count == 0
+
+
+def test_containers_are_immutable(get_readings_seed: dict) -> None:
+    """`frozen=True` only freezes the attribute bindings, not container contents.
+    The set/dict fields must themselves be immutable so callers can't mutate a
+    snapshot in-place."""
+    profile = HardwareProfile.from_raw(get_readings_seed)
+    with pytest.raises(AttributeError):
+        profile.onewire_active_indices.add(99)  # type: ignore[attr-defined]
+    with pytest.raises(AttributeError):
+        profile.dosing_channel_codes.add("ZZ")  # type: ignore[attr-defined]
+    with pytest.raises(TypeError):
+        profile.extension_relays_per_bus[3] = 8  # type: ignore[index]

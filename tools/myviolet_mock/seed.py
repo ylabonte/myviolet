@@ -21,5 +21,5 @@ DEFAULT_SEED_PATH = (
 def load_seed(path: Path | None = None) -> dict[str, Any]:
     """Load a seed snapshot from disk (defaults to the captured demo response)."""
     target = path or DEFAULT_SEED_PATH
-    with target.open() as fh:
+    with target.open(encoding="utf-8") as fh:
         return json.load(fh)  # type: ignore[no-any-return]

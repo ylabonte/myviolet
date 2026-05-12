@@ -7,13 +7,17 @@ optional postrun-timer remaining duration.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+from types import MappingProxyType
 from typing import Any
 
 from ..enums import OutputState
 from ..parsers import parse_optional_seconds, parse_runtime_string
 from ._common import OutputBase
+
+_EMPTY_PUMP_SPEEDS: Mapping[int, PumpSpeed] = MappingProxyType({})
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,7 +43,7 @@ class Pump:
     last_on: datetime | None
     last_off: datetime | None
     runtime: timedelta
-    speeds: dict[int, PumpSpeed] = field(default_factory=dict)
+    speeds: Mapping[int, PumpSpeed] = field(default_factory=lambda: _EMPTY_PUMP_SPEEDS)
 
     @classmethod
     def from_raw(cls, raw: dict[str, Any]) -> Pump | None:
@@ -66,7 +70,7 @@ class Pump:
             last_on=base.last_on,
             last_off=base.last_off,
             runtime=base.runtime,
-            speeds=speeds,
+            speeds=MappingProxyType(speeds),
         )
 
 

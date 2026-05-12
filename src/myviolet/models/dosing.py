@@ -8,7 +8,7 @@ Each channel has a numeric position (1-6) and a textual code (`CL`, `ELO`,
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -36,7 +36,7 @@ class DosingChannel:
     last_can_reset: datetime | None = None
     enabled: bool | None = None
     type: DosingType | None = None
-    state_blocks: list[str] = field(default_factory=list)
+    state_blocks: tuple[str, ...] = ()
 
 
 def collect_dosing_channels(raw: dict[str, Any]) -> dict[str, DosingChannel]:
@@ -69,7 +69,7 @@ def collect_dosing_channels(raw: dict[str, Any]) -> dict[str, DosingChannel]:
             last_can_reset=parse_epoch_milliseconds(raw.get(f"{base}_LAST_CAN_RESET")),
             enabled=_maybe_bool(raw.get(f"{base}_USE")),
             type=_maybe_dosing_type(raw.get(f"{base}_TYPE")),
-            state_blocks=list(raw.get(f"{base}_STATE", []) or []),
+            state_blocks=tuple(raw.get(f"{base}_STATE", []) or []),
         )
     return result
 

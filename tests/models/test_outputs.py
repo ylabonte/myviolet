@@ -35,6 +35,13 @@ def test_pump_with_speeds(get_readings_seed: dict) -> None:
     assert speed_2.last_off is None
 
 
+def test_pump_speeds_is_immutable(get_readings_seed: dict) -> None:
+    pump = Pump.from_raw(get_readings_seed)
+    assert pump is not None
+    with pytest.raises(TypeError):
+        pump.speeds[99] = pump.speeds[0]  # type: ignore[index]
+
+
 def test_pump_unknown_speed_state_skipped() -> None:
     """Forward-compat: unknown PUMP_RPM_N enum value drops that speed, not the pump."""
     raw = {

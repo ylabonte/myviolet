@@ -65,6 +65,38 @@ class TestReadingsNamespace:
         finally:
             await session.close()
 
+    async def test_empty_keys_list_rejected(self) -> None:
+        session = aiohttp.ClientSession()
+        try:
+            async with VioletClient(
+                session, host="violet.local", username="admin", password="secret"
+            ) as client:
+                with pytest.raises(ValueError, match="must not be empty"):
+                    await client.readings.get([])
+        finally:
+            await session.close()
+
+    @pytest.mark.parametrize(
+        "bad_key",
+        [
+            "pH_value&hours=999",  # `&` smuggling
+            "PUMP=evil",  # `=` smuggling
+            "pH value",  # space
+            "",  # empty token
+            "1starts_with_digit",  # leading digit
+        ],
+    )
+    async def test_malicious_key_rejected(self, bad_key: str) -> None:
+        session = aiohttp.ClientSession()
+        try:
+            async with VioletClient(
+                session, host="violet.local", username="admin", password="secret"
+            ) as client:
+                with pytest.raises(ValueError, match="invalid getReadings selector"):
+                    await client.readings.get([bad_key])
+        finally:
+            await session.close()
+
 
 class TestControlNamespace:
     async def test_pump_on_uses_set_function_manually(self) -> None:

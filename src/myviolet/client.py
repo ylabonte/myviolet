@@ -37,6 +37,12 @@ _ALLOWED_SCHEMES = frozenset({"http", "https"})
 # Control keys are uppercase identifiers; subscripts like `EXT1_3` use `_`.
 _CONTROL_KEY_RE = re.compile(r"^[A-Z][A-Z0-9_]*$")
 
+# /getReadings selectors are either field names (e.g. `pH_value`, `PUMP`,
+# `DOS_1_CL_LAST_ON`) or keyword tokens (`ALL`, `DOSAGE`, `RUNTIMES`). All of
+# them are alphanumeric/underscore identifiers — `&` and `=` would smuggle
+# extra query parameters through the transport's raw-string query path.
+_READINGS_KEY_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
+
 
 def _validate_control_key(key: str) -> str:
     if not isinstance(key, str) or not _CONTROL_KEY_RE.match(key):
@@ -178,8 +184,25 @@ class _ReadingsNamespace:
         *,
         timeout: float | None = None,
     ) -> VioletReadings:
-        """Fetch `/getReadings`. With no `keys`, fetches everything."""
-        query = constants.DEFAULT_READINGS_QUERY if keys is None else ",".join(keys)
+        """Fetch `/getReadings`. With no `keys`, fetches everything.
+
+        Raises `ValueError` if `keys` is an empty list (the controller treats
+        no selectors as an error) or contains any entry that isn't an
+        alphanumeric/underscore identifier — the transport passes selector
+        queries through verbatim, so `&`/`=` in a key would smuggle extra
+        parameters into the URL.
+        """
+        if keys is None:
+            query = constants.DEFAULT_READINGS_QUERY
+        else:
+            if not keys:
+                raise ValueError("keys must not be empty; pass None for the default selectors")
+            for key in keys:
+                if not isinstance(key, str) or not _READINGS_KEY_RE.match(key):
+                    raise ValueError(
+                        f"invalid getReadings selector {key!r}; must match [A-Za-z][A-Za-z0-9_]*"
+                    )
+            query = ",".join(keys)
         raw = await self._transport.get(constants.PATH_GET_READINGS, query=query, timeout=timeout)
         return VioletReadings(raw)
 
