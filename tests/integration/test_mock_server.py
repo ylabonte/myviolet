@@ -32,8 +32,9 @@ def _free_port() -> int:
 
 
 async def _wait_for_port(host: str, port: int, *, timeout: float = 10.0) -> None:
-    deadline = asyncio.get_event_loop().time() + timeout
-    while asyncio.get_event_loop().time() < deadline:
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + timeout
+    while loop.time() < deadline:
         try:
             reader, writer = await asyncio.open_connection(host, port)
             writer.close()
@@ -73,6 +74,8 @@ async def mock_server() -> AsyncIterator[tuple[str, int, str, str]]:
             proc.wait(timeout=5)
         except subprocess.TimeoutExpired:
             proc.kill()
+            # Reap the kill so we don't leave a zombie behind.
+            proc.wait(timeout=5)
 
 
 @pytest.mark.integration

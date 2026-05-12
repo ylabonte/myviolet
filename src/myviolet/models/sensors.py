@@ -87,9 +87,16 @@ def collect_onewire_sensors(raw: dict[str, Any]) -> dict[int, OneWireSensor]:
         value_raw = raw.get(f"onewire{idx}_value")
         if value_raw is None:
             continue
+        try:
+            state = OnewireState(str(state_raw))
+        except ValueError:
+            # Forward-compat: skip a sensor whose state string is unknown
+            # to this firmware revision rather than breaking the whole
+            # 1-wire collection.
+            continue
         result[idx] = OneWireSensor(
             index=idx,
-            state=OnewireState(str(state_raw)),
+            state=state,
             rom_code=str(raw.get(f"onewire{idx}_rcode", "")),
             value=float(value_raw),
             unit="°C",

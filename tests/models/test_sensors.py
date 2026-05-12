@@ -25,6 +25,16 @@ def test_analog_sensor_collect(get_readings_seed: dict) -> None:
     assert 6 in sensors
 
 
+def test_onewire_unknown_state_skips_sensor(get_readings_seed: dict) -> None:
+    """Forward-compat: a new firmware onewire state string drops just that sensor."""
+    raw = dict(get_readings_seed)
+    raw["onewire1_state"] = "FUTURE_STATE"
+    sensors = collect_onewire_sensors(raw)
+    assert 1 not in sensors
+    # ... but the other configured sensors are still collected.
+    assert len(sensors) >= 1
+
+
 def test_impulse_input_collect(get_readings_seed: dict) -> None:
     inputs = collect_impulse_inputs(get_readings_seed)
     assert 1 in inputs

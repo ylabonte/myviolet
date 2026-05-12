@@ -22,11 +22,17 @@ class OverflowState:
     def from_raw(cls, raw: dict[str, Any]) -> OverflowState | None:
         if "OVERFLOW_DRYRUN_STATE" not in raw:
             return None
-        return cls(
-            dryrun=SimpleOnOff(raw["OVERFLOW_DRYRUN_STATE"]),
-            overfill=SimpleOnOff(raw.get("OVERFLOW_OVERFILL_STATE", "OFF")),
-            refill=SimpleOnOff(raw.get("OVERFLOW_REFILL_STATE", "OFF")),
-        )
+        try:
+            return cls(
+                dryrun=SimpleOnOff(raw["OVERFLOW_DRYRUN_STATE"]),
+                overfill=SimpleOnOff(raw.get("OVERFLOW_OVERFILL_STATE", "OFF")),
+                refill=SimpleOnOff(raw.get("OVERFLOW_REFILL_STATE", "OFF")),
+            )
+        except ValueError:
+            # Forward-compat: an unknown firmware value on any flag drops the
+            # whole snapshot rather than half-populating it, matching the
+            # `Cover.from_raw` / `OutputBase.from_raw` pattern.
+            return None
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,13 +57,12 @@ class BackwashStatus:
     def from_raw(cls, raw: dict[str, Any]) -> BackwashStatus | None:
         if "BACKWASH_STATE" not in raw:
             return None
-        omni_moving = raw.get("BACKWASH_OMNI_MOVING")
         return cls(
-            delay_running=YesNo(raw.get("BACKWASH_DELAY_RUNNING", "NO")) is YesNo.YES,
+            delay_running=_parse_yesno(raw.get("BACKWASH_DELAY_RUNNING", "NO")) is YesNo.YES,
             delay_started_at=parse_epoch_seconds(raw.get("BACKWASH_DELAY_TIMESTAMP")),
             last_auto_run=parse_epoch_seconds(raw.get("BACKWASH_LAST_AUTO_RUN")),
             last_manual_run=parse_epoch_seconds(raw.get("BACKWASH_LAST_MANUAL_RUN")),
-            omni_moving=None if omni_moving is None else YesNo(omni_moving),
+            omni_moving=_parse_yesno(raw.get("BACKWASH_OMNI_MOVING")),
             omni_state=raw.get("BACKWASH_OMNI_STATE"),
             step=int(raw.get("BACKWASH_STEP", 0)),
             raw_state=str(raw["BACKWASH_STATE"]),
@@ -76,7 +81,7 @@ class BathingAi:
     surveillance_state: str
     start_level: float
     last_level: float
-    pump_state: SimpleOnOff
+    pump_state: SimpleOnOff | None
     pump_started_at: datetime | None
 
     @classmethod
@@ -87,7 +92,7 @@ class BathingAi:
             surveillance_state=str(raw["BATHING_AI_SURVEILLANCE_STATE"]),
             start_level=float(raw.get("BATHING_AI_START_LEVEL", 0.0)),
             last_level=float(raw.get("BATHING_AI_LAST_LEVEL", 0.0)),
-            pump_state=SimpleOnOff(raw.get("BATHING_AI_PUMP_STATE", "OFF")),
+            pump_state=_parse_simple_onoff(raw.get("BATHING_AI_PUMP_STATE", "OFF")),
             pump_started_at=parse_epoch_seconds(raw.get("BATHING_AI_PUMP_TIMESTAMP")),
         )
 
@@ -103,4 +108,27 @@ class PvSurplus:
         value = raw.get("PVSURPLUS")
         if value is None:
             return None
-        return cls(state=PvSurplusState(int(value)))
+        try:
+            return cls(state=PvSurplusState(int(value)))
+        except ValueError:
+            # Forward-compat: unknown firmware enum value drops the snapshot
+            # rather than crashing parsing of unrelated readings.
+            return None
+
+
+def _parse_yesno(value: Any) -> YesNo | None:
+    if value is None:
+        return None
+    try:
+        return YesNo(value)
+    except ValueError:
+        return None
+
+
+def _parse_simple_onoff(value: Any) -> SimpleOnOff | None:
+    if value is None:
+        return None
+    try:
+        return SimpleOnOff(value)
+    except ValueError:
+        return None
