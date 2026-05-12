@@ -61,7 +61,11 @@ class VioletReadings:
     """
 
     def __init__(self, raw: dict[str, Any]) -> None:
-        self._raw = raw
+        # Defensive copy: the caller may still hold a reference to `raw` and
+        # later mutate it; without a copy, that would silently corrupt the
+        # memoized typed views on this snapshot. Shallow is enough — the
+        # /getReadings payload is a flat dict of JSON scalars.
+        self._raw = dict(raw)
 
     @property
     def raw(self) -> Mapping[str, Any]:

@@ -40,6 +40,21 @@ class TestRawImmutability:
         with pytest.raises(TypeError):
             raw["PUMP"] = 99  # type: ignore[index]
 
+    def test_caller_mutation_after_construction_is_isolated(self) -> None:
+        """The constructor must defensively copy `raw` so a caller who keeps a
+        reference to the input dict can't retroactively corrupt the snapshot."""
+        from myviolet.readings import VioletReadings
+
+        original = {"PUMP": 1, "PUMP_RUNTIME": "00h 00m 00s"}
+        snapshot = VioletReadings(original)
+        # Force memoization of a typed view, then mutate the caller-held dict.
+        _ = snapshot.pump
+        original["PUMP"] = 99
+        original["NEW_KEY"] = "injected"
+        # The snapshot's view of the raw payload is unaffected.
+        assert snapshot.raw["PUMP"] == 1
+        assert "NEW_KEY" not in snapshot.raw
+
 
 class TestNamespaceDisambiguation:
     """M3: the dosing-parameters namespace should not collide with the dosing control method."""
