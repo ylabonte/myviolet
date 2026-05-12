@@ -1,0 +1,121 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "myviolet"
+dynamic = ["version"]
+description = "Async Python library for the Pooldigital Violet pool controller."
+readme = "README.md"
+requires-python = ">=3.13"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [
+  { name = "Yannic Labonte", email = "yannic.labonte@gmail.com" },
+]
+keywords = ["violet", "pooldigital", "pool", "home-automation", "home-assistant", "async"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Home Automation",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Framework :: AsyncIO",
+    "Typing :: Typed",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "aiohttp>=3.13.5,<4",
+    "yarl>=1.23.0,<2",
+]
+
+[project.optional-dependencies]
+dev = ["ruff", "mypy", "pre-commit"]
+test = ["pytest", "pytest-asyncio", "pytest-cov", "aioresponses"]
+docs = [
+    "mkdocs",
+    "mkdocs-material",
+    "mkdocstrings[python]",
+    "mkdocs-include-markdown-plugin",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/ylabonte/myviolet"
+"Documentation" = "https://ylabonte.github.io/myviolet/"
+"Source" = "https://github.com/ylabonte/myviolet"
+"Changelog" = "https://github.com/ylabonte/myviolet/blob/main/CHANGELOG.md"
+"Bug Tracker" = "https://github.com/ylabonte/myviolet/issues"
+
+[tool.hatch.version]
+source = "vcs"
+fallback-version = "0.1.0.dev0"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/myviolet/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/myviolet"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/",
+    "tests/",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+]
+exclude = [
+    "tools/",
+    "tests/integration/",
+    "tests/mock/",
+    ".devcontainer/",
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP", "SIM", "RET", "PTH"]
+ignore = [
+    "B905",   # zip() without strict= — not critical here
+    "RET504", # Unnecessary assignment before return — readability tradeoff
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["E501"]
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+warn_redundant_casts = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+strict_equality = true
+files = ["src"]
+exclude = ["src/myviolet/_version.py"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "--cov=myviolet --cov-report=term-missing --cov-report=xml --cov-fail-under=80 -m 'not integration'"
+markers = [
+    "integration: end-to-end tests that spawn the mock server as a subprocess; opt-in via -m integration",
+]
+
+[tool.coverage.run]
+source = ["myviolet"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "except ImportError",
+]
