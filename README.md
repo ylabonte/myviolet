@@ -21,9 +21,9 @@ Async Python library for the [Pooldigital Violet pool controller](https://www.po
 - `aiohttp >= 3.10, < 4`
 - `yarl >= 1.17, < 2`
 
-The `aiohttp` and `yarl` lower bounds are set wide enough to cover older
-Home Assistant Core deployments — both intentionally accept versions
-older than HA Core 2026.5's pins.
+The `aiohttp` and `yarl` version ranges are chosen to maintain compatibility
+with Home Assistant Core deployments while remaining aligned with the
+project’s supported runtime constraints.
 
 ## Install
 
