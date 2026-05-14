@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- README's `## Requirements` section was stale — still claimed `aiohttp >=3.13.5` and `yarl >=1.23.0`. Updated to match the actual pins in `pyproject.toml` (`aiohttp >=3.10,<4`, `yarl >=1.17,<2`).
+- README's `## Requirements` section was stale — still claimed `aiohttp>=3.13.5` and `yarl>=1.23.0`. Updated to match the actual pins in `pyproject.toml` (`aiohttp>=3.10,<4`, `yarl>=1.17,<2`).
 
 ## [0.1.1] - 2026-05-14
 
