@@ -7,10 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-05-14
+
 ### Changed
 
+- **Loosened `aiohttp` pin from `>=3.13.5,<4` to `>=3.10,<4`.** Lets the library install into Home Assistant Core environments that still ship an older aiohttp than the most recent release. `yarl >=1.23.0,<2` unchanged.
 - **Development dependencies moved from `[project.optional-dependencies]` to `[dependency-groups]`** (PEP 735). The `dev`, `test`, and `docs` groups were never user-facing extras; they're for working *on* the package, not *with* it. They no longer appear as `Provides-Extra:` on PyPI. Local install: `pip install -e . --group dev --group test --group docs` (requires pip ≥ 25.1). CI workflows (`test.yml`, `lint.yml`, `docs.yml`) and `CONTRIBUTING.md` updated accordingly.
-- **License changed from Apache-2.0 to MIT.** The `LICENSE` file now contains the canonical MIT License text; `pyproject.toml`'s SPDX expression (`license = "MIT"`) and Trove classifier (`"License :: OSI Approved :: MIT License"`) updated to match. MIT remains compatible with Home Assistant Core's Apache-2.0 licensing — MIT-licensed code can be incorporated into Apache-2.0 projects. v0.1.0 on PyPI stays as Apache-2.0 (published releases are immutable); the next release will ship as MIT. Downstream consumers should review the new license terms before upgrading.
+- **License changed from Apache-2.0 to MIT.** The `LICENSE` file now contains the canonical MIT License text; `pyproject.toml`'s SPDX expression (`license = "MIT"`) and Trove classifier (`"License :: OSI Approved :: MIT License"`) updated to match. v0.1.0 on PyPI stays as Apache-2.0 (published releases are immutable); from 0.1.1 onwards the package ships as MIT. Downstream consumers should review the new license terms before upgrading.
 
 ## [0.1.0] - 2026-05-12
 
@@ -32,5 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Test + coverage summary rendered to the GitHub Actions step summary
   via `.github/scripts/summarize_tests.py`.
 
-[Unreleased]: https://github.com/ylabonte/myviolet/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/ylabonte/myviolet/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/ylabonte/myviolet/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/ylabonte/myviolet/releases/tag/v0.1.0
