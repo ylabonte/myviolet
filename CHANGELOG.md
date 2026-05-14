@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Development dependencies moved from `[project.optional-dependencies]` to `[dependency-groups]`** (PEP 735). The `dev`, `test`, and `docs` groups were never user-facing extras; they're for working *on* the package, not *with* it. They no longer appear as `Provides-Extra:` on PyPI. Local install: `pip install -e . --group dev --group test --group docs` (requires pip ≥ 25.1). CI workflows (`test.yml`, `lint.yml`, `docs.yml`) and `CONTRIBUTING.md` updated accordingly.
+- **License changed from Apache-2.0 to MIT.** The `LICENSE` file now contains the canonical MIT License text; `pyproject.toml`'s SPDX expression (`license = "MIT"`) and Trove classifier (`"License :: OSI Approved :: MIT License"`) updated to match. MIT remains compatible with Home Assistant Core's Apache-2.0 licensing — MIT-licensed code can be incorporated into Apache-2.0 projects. v0.1.0 on PyPI stays as Apache-2.0 (published releases are immutable); the next release will ship as MIT. Downstream consumers should review the new license terms before upgrading.
 
 ## [0.1.0] - 2026-05-12
 
