@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Loosened `yarl` pin from `>=1.23.0,<2` to `>=1.17,<2`** for older Home Assistant Core compatibility (PR #8, merged after v0.1.1 shipped). Pairs with the same-cycle aiohttp loosen recorded in 0.1.1 below.
+
+### Fixed
+
+- README's `## Requirements` section was stale — still claimed `aiohttp>=3.13.5` and `yarl>=1.23.0`. Updated to match the actual pins in `pyproject.toml` (`aiohttp>=3.10,<4`, `yarl>=1.17,<2`).
+
 ## [0.1.1] - 2026-05-14
 
 ### Changed
