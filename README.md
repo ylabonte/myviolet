@@ -91,5 +91,6 @@ other Python-based automations.
 
 ## License
 
-Apache-2.0 — see [LICENSE](LICENSE). Chosen specifically for compatibility
-with Home Assistant Core's licensing requirements.
+MIT — see [LICENSE](LICENSE). Compatible with Home Assistant Core's
+Apache-2.0 licensing (MIT-licensed code can be incorporated into Apache-2.0
+projects).
