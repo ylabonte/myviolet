@@ -1,0 +1,53 @@
+name: Release
+
+# Runs on every push to main. Has two modes, both handled by changesets/action:
+#
+#   1. Open the "Version Packages" PR — when one or more `.changeset/*.md`
+#      files exist on `main`, changesets/action consumes them into a PR that
+#      bumps `package.json` `version` and prepends a section to `CHANGELOG.md`.
+#      Merging the PR drops us into mode 2.
+#
+#   2. Publish — when the package.json version was just bumped (i.e. the
+#      "Version Packages" PR was merged), the workflow tags `v<version>` and
+#      creates a GitHub Release. The `python-publish.yml` workflow takes it
+#      from there and pushes the wheel to PyPI via Trusted Publishing — that
+#      workflow is unchanged, so the existing `pypi` environment's OIDC
+#      Trusted Publisher config keeps working.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write          # tag + push, GitHub Release creation
+  pull-requests: write     # changesets/action opens the Version Packages PR
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Release PR or tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0   # full history so we can detect tags and amend the bump commit
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+
+      - name: Install changesets CLI
+        run: npm install -g @changesets/cli@^2
+
+      - name: Open release PR or tag-and-release
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          version: changeset version
+          publish: bash .github/scripts/release-and-tag.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # for `gh release create` inside the script

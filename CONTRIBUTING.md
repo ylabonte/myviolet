@@ -53,7 +53,17 @@ The devcontainer starts this automatically.
 1. Fork the repository and create a feature branch from `main`.
 2. Make your changes with tests.
 3. Ensure `pytest`, `ruff check .`, and `mypy src` all pass locally.
-4. Open a pull request against `main`. Use the PR template.
+4. **Add a changeset** if your change is user-visible (dep change, API change, bugfix,
+   release-relevant docs):
+
+   ```bash
+   npx --yes @changesets/cli@^2 add
+   ```
+
+   Pick the bump type (major / minor / patch) and write a short narrative description. Commit
+   the resulting `.changeset/<random-slug>.md` along with your code. See
+   [`.changeset/README.md`](.changeset/README.md) for the full release flow.
+5. Open a pull request against `main`. Use the PR template.
 
 ## Ideas and questions
 
