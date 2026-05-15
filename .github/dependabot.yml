@@ -1,19 +1,10 @@
 version: 2
 
-updates:
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    assignees:
-      - ylabonte
-    commit-message:
-      prefix: "ci"
-    groups:
-      actions:
-        patterns:
-          - "*"
+# GitHub Actions updates are owned by `.github/workflows/update-github-actions.yml`
+# (driven by `ylabonte/github-actions-updater@v1`). Dependabot is scoped to Python
+# deps only here.
 
+updates:
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
