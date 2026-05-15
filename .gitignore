@@ -137,3 +137,9 @@ _site/
 
 # ruff
 .ruff_cache/
+
+# Node — only used as a host for the changesets CLI (see .changeset/README.md);
+# nothing in this repo actually depends on node_modules at runtime.
+node_modules/
+package-lock.json
+pnpm-lock.yaml
